@@ -85,22 +85,20 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
             //ここはdisconnectしたときに発火する場所
             console.log(`${newState.member.displayName}さんが退室しました`);
   
-            //タイマーの計測を終了する
-            await fnc_studytimer.timerEnd(newState.id);
-            //退出したユーザーのタイマー情報を取得 
-            const timer = await fnc_studytimer.getTimerInfo(newState.id);
-            const hourOfStudy = await timer.end - timer.start;
-            const strHourOfStudy = await fnc_studytimer.formatTime(hourOfStudy);
+            //タイマーの計測を終了し、退出したユーザーのタイマー情報を取得 
+            const timer = await fnc_studytimer.timerEnd(newState.id);
+            const hourOfStudy = await timer.time_end - timer.time_start;
 
-            // 勉強時間をusersテーブルに登録する
-            await fnc_users.upSertUserData(newState.id, hourOfStudy);
-            //総勉強時間を取得するためユーザー情報を取得する
-            const user = await fnc_users.getUserInfo(newState.id);
-            const totalHourOfStudy = await user.totalHourOfStudy;
-            const strTotalHourOfStudy = await fnc_studytimer.formatTime(totalHourOfStudy);
+            //勉強時間をusersテーブルに登録し、総勉強時間を取得するためユーザー情報を取得する
+            const user = await fnc_users.upSertUserData(newState.id, hourOfStudy);
+            const totalHourOfStudy = user.totalHourOfStudy;
             //勉強時間報告用テキストチャンネルへ勉強時間を送信する。
-            await client.channels.cache.get(sendMsgChannelID).send(`${newState.member.displayName}さんの勉強時間は${strHourOfStudy}でした`);
-            await client.channels.cache.get(sendMsgChannelID).send(`今まで総勉強時間は${strTotalHourOfStudy}です`);
+            
+            const strHourOfStudy =  fnc_studytimer.formatTime(hourOfStudy);
+            const strTotalHourOfStudy = fnc_studytimer.formatTime(totalHourOfStudy);
+            client.channels.cache.get(sendMsgChannelID).send(`${newState.member.displayName}さんの勉強時間は${strHourOfStudy}でした`);
+            client.channels.cache.get(sendMsgChannelID).send(`今まで総勉強時間は${strTotalHourOfStudy}です`);
+
         }        
     }
 });

@@ -14,36 +14,62 @@ _users.on("error", (err) => console.log("Connection Error", err));
 const _expireTime = 86400000 * 14;
 
 
+
 /**
- * ユーザーIDを元に_usersテーブルからユーザー情報を取得します。
+ * userのテーブル構成を設定します
+ * @param {*} argUserId ユーザーID
+ * @returns userのvalue(テーブル)オブジェクト
+ */
+const init = async (argUserId) => {
+    const tblUser = {
+        "userID": argUserId,             //ユーザーID
+        "totalHourOfStudy": null,        //総勉強時間
+        "updDate": getDate()              //更新日付 
+    }
+    await _users.set(argUserId, tblUser);
+    return _users.get(argUserId);
+}
+
+/**
+ * 今日日付を取得します。 
+ * @returns YYYY-MM-DD形式の日付文字列
+ */
+const getDate = () => {
+    //sv-SEロケールはYYYY-MM-DD形式の日付文字列を返します。
+    return new Date().toLocaleDateString('sv-SE');
+}
+
+
+/**
+ * ユーザーIDを元にusersテーブルからユーザー情報を取得します。
  * @param {string} argUserId ユーザーID 
  * @returns userオブジェクト。引数のユーザーIDをキーとするデータが存在しない場合はundefinedを返します。
  */
-exports.getUserInfo =  (argUserId) => {
-    //argUserIdをキーに_usersテーブルからユーザー情報を取得
+exports.getUserInfo =  async (argUserId) => {
+    //argUserIdをキーにusersテーブルからユーザー情報を取得
     const user = _users.get(argUserId);
     return user;
 }
 
 
 /**
- * ユーザーの情報を_usersテーブルにアップサートします。
+ * ユーザーの情報をusersテーブルにアップサートします。
  * ユーザーIDがテーブルに存在しなければ新規でデータを作成します。
  * 2週間更新されなかった場合、そのデータは削除されます。
  * @param {string} argUserId ユーザーID
  * @param {number} argHourOfStudy 勉強時間。当引数にわたってきた値をVCの滞在時間として勉強時間に加算します。
  */
 exports.upSertUserData = async (argUserId, argHourOfStudy) => {
-    const user = await this.getUserInfo(argUserId);
-
-    if(!user) {
-        //ユーザーが_usersテーブルに存在しない場合は、_usersテーブルに新規登録する
-        console.log(`${argUserId}は未登録ユーザーです。新規登録を行います。`);
-        await _users.set(argUserId, { "userID": argUserId, "totalHourOfStudy": argHourOfStudy }, _expireTime);
-    } else {
-        //登録済みユーザーは保存されている総勉強時間に引数の勉強時間を加算して、更新を行う
-        let totalHourOfStudy = await user.totalHourOfStudy + argHourOfStudy;
-        user.totalHourOfStudy = await totalHourOfStudy;
-        await _users.set(argUserId, user, _expireTime);
-    }
+    const user =  await this.getUserInfo(argUserId) ?? await init(argUserId);
+    //取得したuserテーブルオブジェクトをコピー
+    const updUser = await Object.assign({}, user);
+    //総勉強時間に引数の勉強時間を加算して、更新を行う
+    const totalHourOfStudy = updUser.totalHourOfStudy + argHourOfStudy;
+    updUser.totalHourOfStudy =  totalHourOfStudy;
+    updUser.updDate = getDate();
+    //更新内容をマージ
+    const result = await Object.assign(user, updUser);
+    //更新したデータを保存する
+    await _users.set(argUserId, result, _expireTime);
+    return user;
 }
