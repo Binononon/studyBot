@@ -6,13 +6,27 @@
 //データ保存用ライブラリ
 const Keyv = require('keyv');
 
-//_studytimerテーブル参照用定数
+//studytimerテーブル参照用定数
 const _studytimer = new Keyv('sqlite://test.db', { table: 'studytimer' } );
 
 _studytimer.on("error", (err) => console.log("Connection Error", err));
 
+/**
+ * studytimerのテーブル構成を設定します
+ * @param {*} argUserId ユーザーID
+ */
+const init = async (argUserId) => {
+    const tblStudyTimer = {
+        "userID": argUserId,         //ユーザーID
+        "time_start": Date.now(),    //計測開始時間
+        "time_end": 0                //計測終了時間
+    }
+    await _studytimer.set(argUserId, tblStudyTimer);
+}
+
+
 exports.getTimerInfo = (argUserId) => {
-    return _studytimer.get(argUserId,true);
+    return _studytimer.get(argUserId);
 }
 
 /**
@@ -20,7 +34,7 @@ exports.getTimerInfo = (argUserId) => {
  * @param {string} argUserId
  */
 exports.timerStart = (argUserId) => {
-    _studytimer.set(argUserId, { "userID": argUserId, "time_start": Date.now(), "time_end": null });
+    init(argUserId);
 }
 
 /**
@@ -28,12 +42,16 @@ exports.timerStart = (argUserId) => {
  * @param {string} argUserId
  */
 exports.timerEnd = async (argUserId) => {
-    const timer  = await this.getTimerInfo(argUserId);
-    //ないとは思うが、タイマーのデータが取得できなければ何かしらの異常動作と捉え終了させる
-    if(!timer) return;
-
-    timer.time_end = Date.now();
-    _studytimer.set(argUserId, timer, 10000);
+    const timer = await this.getTimerInfo(argUserId);
+    //studytimerテーブルオブジェクトをコピー
+    const updtimer = await Object.assign({}, timer);
+    updtimer.time_end = Date.now();
+    //更新内容をマージ
+    const result = await Object.assign(timer, updtimer);
+    //終了時間を登録
+    await _studytimer.set(argUserId, result, 10000);
+    
+    return timer;
 }
 
 /**
@@ -41,7 +59,7 @@ exports.timerEnd = async (argUserId) => {
  * @param {number} argDateNum ミリ秒の数値
  * @returns 文字列「ー分ー秒」
  */
-exports.formatTime =  async (argDateNum) => {
+exports.formatTime = (argDateNum) => {
     const hours = Math.floor(argDateNum/1000/60/60)%24
     const min = Math.floor(argDateNum/1000/60)%60;
 
