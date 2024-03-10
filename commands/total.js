@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 //データ操作ライブラリ
-const fnc_users = require('../users.cjs');
-const fnc_studytimer = require('../studytimer.cjs');
+const fnc_users = require('../modules/users.cjs');
+const fnc_studytimer = require('../modules/studytimer.cjs');
 
 module.exports = {
 	data: new SlashCommandBuilder()
