@@ -39,9 +39,9 @@ exports.timerEnd = async (argUserId) => {
 /**
  * Date.now()などで取得したミリ秒のnumberを「~分~秒」という文字列に変換して返します。
  * @param {number} argDateNum ミリ秒の数値
- * @returns {string} 文字列「ー分ー秒」
+ * @returns 文字列「ー分ー秒」
  */
-exports.formatTime = (argDateNum) => {
+exports.formatTime =  async (argDateNum) => {
     const hours = Math.floor(argDateNum/1000/60/60)%24
     const min = Math.floor(argDateNum/1000/60)%60;
 

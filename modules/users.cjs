@@ -38,8 +38,8 @@ exports.upSertUserData = async (argUserId, argHourOfStudy) => {
 
     if(!user) {
         //ユーザーが_usersテーブルに存在しない場合は、_usersテーブルに新規登録する
-        console.log(`${argUserId}は未登録ユーザーです。新規登録を行います。`)
-        _users.set(argUserId, { "userID": argUserId, "totalHourOfStudy": argHourOfStudy }, _expireTime);
+        console.log(`${argUserId}は未登録ユーザーです。新規登録を行います。`);
+        await _users.set(argUserId, { "userID": argUserId, "totalHourOfStudy": argHourOfStudy }, _expireTime);
     } else {
         //登録済みユーザーは保存されている総勉強時間に引数の勉強時間を加算して、更新を行う
         let totalHourOfStudy = await user.totalHourOfStudy + argHourOfStudy;
