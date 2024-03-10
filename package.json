@@ -10,6 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.12.1"
+    "@keyv/sqlite": "^3.6.7",
+    "discord.js": "^14.12.1",
+    "keyv": "^4.5.4",
+    "pify": "^6.1.0",
+    "sqlite3": "^5.1.7"
   }
 }
