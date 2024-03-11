@@ -6,7 +6,7 @@
 //データ保存用ライブラリ
 const Keyv = require('keyv');
 //userテーブル参照用定数
-const _users = new Keyv('sqlite://test.db', { table: 'users' } );
+const _users = new Keyv('sqlite://study.db', { table: 'users' } );
 
 _users.on("error", (err) => console.log("Connection Error", err));
 
@@ -24,7 +24,7 @@ const init = async (argUserId) => {
     const tblUser = {
         "userID": argUserId,             //ユーザーID
         "totalHourOfStudy": null,        //総勉強時間
-        "updDate": getDate()              //更新日付 
+        "updDate": this.getDate()        //更新日付 
     }
     await _users.set(argUserId, tblUser);
     return _users.get(argUserId);
@@ -34,7 +34,7 @@ const init = async (argUserId) => {
  * 今日日付を取得します。 
  * @returns YYYY-MM-DD形式の日付文字列
  */
-const getDate = () => {
+exports.getDate = () => {
     //sv-SEロケールはYYYY-MM-DD形式の日付文字列を返します。
     return new Date().toLocaleDateString('sv-SE');
 }
@@ -66,7 +66,7 @@ exports.upSertUserData = async (argUserId, argHourOfStudy) => {
     //総勉強時間に引数の勉強時間を加算して、更新を行う
     const totalHourOfStudy = updUser.totalHourOfStudy + argHourOfStudy;
     updUser.totalHourOfStudy =  totalHourOfStudy;
-    updUser.updDate = getDate();
+    updUser.updDate = this.getDate();
     //更新内容をマージ
     const result = await Object.assign(user, updUser);
     //更新したデータを保存する

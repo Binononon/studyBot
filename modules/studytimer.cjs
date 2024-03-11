@@ -7,7 +7,7 @@
 const Keyv = require('keyv');
 
 //studytimerテーブル参照用定数
-const _studytimer = new Keyv('sqlite://test.db', { table: 'studytimer' } );
+const _studytimer = new Keyv('sqlite://study.db', { table: 'studytimer' } );
 
 _studytimer.on("error", (err) => console.log("Connection Error", err));
 
@@ -49,9 +49,18 @@ exports.timerEnd = async (argUserId) => {
     //更新内容をマージ
     const result = await Object.assign(timer, updtimer);
     //終了時間を登録
-    await _studytimer.set(argUserId, result, 10000);
+    await _studytimer.set(argUserId, result, 60000);
     
     return timer;
+}
+
+/**
+ * studytimerに記録されたデータから勉強時間を計算して返します。
+ * @param {*} timer studytimerテーブルのvalueオブジェクト
+ * @returns 勉強時間（ミリ秒）
+ */
+exports.calcHourofStudy = async (timer) => {
+    return timer.time_end - timer.time_start;
 }
 
 /**
