@@ -8,6 +8,7 @@ const { Client, Events, GatewayIntentBits } = require('discord.js');
 //データ操作モジュール
 const fnc_users = require('./modules/users.cjs');
 const fnc_studytimer = require('./modules/studytimer.cjs');
+const fnc_statistics = require('./modules/statistics.cjs');
 
 
 // 設定ファイルから特定の情報を呼び出し、変数に保存します
@@ -87,17 +88,16 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
   
             //タイマーの計測を終了し、退出したユーザーのタイマー情報を取得 
             const timer = await fnc_studytimer.timerEnd(newState.id);
-            const hourOfStudy = await timer.time_end - timer.time_start;
-
-            //勉強時間をusersテーブルに登録し、総勉強時間を取得するためユーザー情報を取得する
+            const hourOfStudy = await fnc_studytimer.calcHourofStudy(timer);
+            //勉強時間をusersテーブルに登録し、総勉強時間を取得するためvalueオブジェクトを取得する
             const user = await fnc_users.upSertUserData(newState.id, hourOfStudy);
-            const totalHourOfStudy = user.totalHourOfStudy;
+            //勉強時間をstatisticsテーブルに登録し、valueオブジェクトを取得する
+            const statistics = await fnc_statistics.upsertStatistics(user, hourOfStudy);
             //勉強時間報告用テキストチャンネルへ勉強時間を送信する。
-            
-            const strHourOfStudy =  fnc_studytimer.formatTime(hourOfStudy);
-            const strTotalHourOfStudy = fnc_studytimer.formatTime(totalHourOfStudy);
-            client.channels.cache.get(sendMsgChannelID).send(`${newState.member.displayName}さんの勉強時間は${strHourOfStudy}でした`);
-            client.channels.cache.get(sendMsgChannelID).send(`今まで総勉強時間は${strTotalHourOfStudy}です`);
+            const strHourOfStudy =  fnc_studytimer.formatTime(statistics.perDay); //1日の勉強時間
+            const strTotalHourOfStudy = fnc_studytimer.formatTime(user.totalHourOfStudy); //今までの総勉強時間
+            client.channels.cache.get(sendMsgChannelID).send(`${newState.member.displayName}さんの本日の勉強時間は${strHourOfStudy}です`);
+            client.channels.cache.get(sendMsgChannelID).send(`今までの総勉強時間は${strTotalHourOfStudy}です`);
 
         }        
     }
